@@ -7,7 +7,9 @@ import (
 	"testing"
 )
 
-var sourceCodeC = `#include <stdio.h>
+var sourceCodeCPP = `#include <iostream>
+
+using namespace std;
 
 int main() {
 	int a, b;
@@ -16,12 +18,12 @@ int main() {
 	}
 }`
 
-func TestC_Compile(t *testing.T) {
-	compiler, err := NewCompiler("c")
+func TestCPP_Compile(t *testing.T) {
+	compiler, err := NewCompiler("cpp")
 	if err != nil {
 		log.Panic(err)
 	}
-	err = compiler.Init(sourceCodeC, "/tmp/yu")
+	err = compiler.Init(sourceCodeCPP, "/tmp/yu")
 	if err != nil {
 		log.Panic(err)
 	} else {

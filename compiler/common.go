@@ -67,8 +67,10 @@ func shell(command string, ctx context.Context) error {
 // 创建编译程序 对外暴露
 func NewCompiler(name string) (Compiler, error) {
 	switch name {
-	case "c":
+	case "c", "C":
 		return &c{}, nil
+	case "cpp", "CPP", "C++", "c++":
+		return &cpp{}, nil
 	default:
 		return nil, errors.New("Language not supported")
 	}

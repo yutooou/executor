@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-type c struct {
+type cpp struct {
 	code            string // 源代码
 	isReady         bool   // 是否编译完成
 	codeFilePath    string // 目标源代码目录
@@ -21,7 +21,7 @@ type c struct {
 }
 
 // 完成编译程序的初始化工作
-func (c *c) Init(code, workDir string) error {
+func (c *cpp) Init(code, workDir string) error {
 	c.code = code
 	// 检查工作目录
 	err := checkWorkDir(workDir)
@@ -31,11 +31,11 @@ func (c *c) Init(code, workDir string) error {
 	}
 
 	// 写入文件
-	err = c.createFile(".c", ".do")
+	err = c.createFile(".cpp", ".do")
 	return err
 }
 
-func (c *c) createFile(codeFileSuffix, programFileSuffix string) error {
+func (c *cpp) createFile(codeFileSuffix, programFileSuffix string) error {
 	// 写入源代码文件信息
 	randomName := utils.UUID(12)
 	c.codeFileName = fmt.Sprintf("%s%s", randomName, codeFileSuffix)
@@ -54,9 +54,9 @@ func (c *c) createFile(codeFileSuffix, programFileSuffix string) error {
 	return err
 }
 
-func (c *c) Compile() error {
+func (c *cpp) Compile() error {
 	// 写入编译命令
-	cmd := fmt.Sprintf(compileCommands.C, c.codeFilePath, c.programFilePath)
+	cmd := fmt.Sprintf(compileCommands.CPP, c.codeFilePath, c.programFilePath)
 	// 设置环境信息 编译指令最多执行10秒就强制退出
 	ctx, cancel := context.WithTimeout(context.Background(), 10 * time.Second)
 	defer cancel()
@@ -67,6 +67,6 @@ func (c *c) Compile() error {
 	return err
 }
 
-func (c *c) RunArgs() (args []string) {
+func (c *cpp) RunArgs() (args []string) {
 	return []string{c.programFilePath}
 }
