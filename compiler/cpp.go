@@ -21,52 +21,52 @@ type cpp struct {
 }
 
 // 完成编译程序的初始化工作
-func (c *cpp) Init(code, workDir string) error {
-	c.code = code
+func (this *cpp) Init(code, workDir string) error {
+	this.code = code
 	// 检查工作目录
 	err := checkWorkDir(workDir)
-	c.workDir = workDir
+	this.workDir = workDir
 	if err != nil {
 		return err
 	}
 
 	// 写入文件
-	err = c.createFile(".cpp", ".do")
+	err = this.createFile(".cpp", ".do")
 	return err
 }
 
-func (c *cpp) createFile(codeFileSuffix, programFileSuffix string) error {
+func (this *cpp) createFile(codeFileSuffix, programFileSuffix string) error {
 	// 写入源代码文件信息
 	randomName := utils.UUID(12)
-	c.codeFileName = fmt.Sprintf("%s%s", randomName, codeFileSuffix)
-	c.codeFilePath = path.Join(c.workDir, c.codeFileName)
+	this.codeFileName = fmt.Sprintf("%s%s", randomName, codeFileSuffix)
+	this.codeFilePath = path.Join(this.workDir, this.codeFileName)
 	// 写入可执行文件信息
-	c.programFileName = fmt.Sprintf("%s%s", randomName, programFileSuffix)
-	c.programFilePath = path.Join(c.workDir, c.programFileName)
+	this.programFileName = fmt.Sprintf("%s%s", randomName, programFileSuffix)
+	this.programFilePath = path.Join(this.workDir, this.programFileName)
 
 	// 保存文件
-	file, err := os.OpenFile(c.codeFilePath, os.O_RDWR|os.O_CREATE, filePERM)
+	file, err := os.OpenFile(this.codeFilePath, os.O_RDWR|os.O_CREATE, filePERM)
 	if err != nil {
 		return err
 	}
 	defer file.Close()
-	_, err = file.WriteString(c.code)
+	_, err = file.WriteString(this.code)
 	return err
 }
 
-func (c *cpp) Compile() error {
+func (this *cpp) Compile() error {
 	// 写入编译命令
-	cmd := fmt.Sprintf(compileCommands.CPP, c.codeFilePath, c.programFilePath)
+	cmd := fmt.Sprintf(compileCommands.CPP, this.codeFilePath, this.programFilePath)
 	// 设置环境信息 编译指令最多执行10秒就强制退出
 	ctx, cancel := context.WithTimeout(context.Background(), 10 * time.Second)
 	defer cancel()
 	err := shell(cmd, ctx)
 	if err == nil {
-		c.isReady = true
+		this.isReady = true
 	}
 	return err
 }
 
-func (c *cpp) RunArgs() (args []string) {
-	return []string{c.programFilePath}
+func (this *cpp) RunArgs() (args []string) {
+	return []string{this.programFilePath}
 }
