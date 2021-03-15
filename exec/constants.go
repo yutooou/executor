@@ -1,5 +1,22 @@
 package exec
 
+import (
+	"fmt"
+	"os"
+)
+
+func init() {
+	_, err := os.Stat(WORKDIR)
+	if os.IsNotExist(err) {
+		// 创建工作空间文件夹
+		err := os.Mkdir(WORKDIR, os.ModePerm)
+		if err != nil {
+			panic(fmt.Sprintf("sys_workdir create failed!, err = %v", err.Error()))
+		}
+	}
+}
+
+
 const (
 	WORKDIR = "/tmp/ytoj"	// 工作空间
 	PROBLEM_CONFIG_FILENAME = "config.json"

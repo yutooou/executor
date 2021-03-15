@@ -27,3 +27,23 @@ type Result struct {
 	SeInfo      	string                	`json:"se_info"`      	// System Error 提示信息
 	CeInfo      	string                	`json:"ce_info"`      	// Compile Error 提示信息
 }
+
+// 测试数据运行结果
+type TestCaseResult struct {
+	Id       		int
+	Input        	string
+	Output       	string
+	ProgramOut   	string
+	ProgramError 	string
+	JudgeResult    	int
+	TextDiffLog 	string
+	TimeUsed    	int
+	MemoryUsed  	int
+	ReSignum    	int
+	SameLines   	int
+	TotalLines  	int
+	ReInfo      	string
+	SeInfo      	string
+	CeInfo      	string
+}
+

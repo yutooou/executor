@@ -50,7 +50,7 @@ func (r *Runner) Judge() Result {
 		return result
 	}
 	
-	var resultNumbers []int // 判题结果切片 位置对应测试点
+	// var resultNumbers []int // 判题结果切片 位置对应测试点
 	// 遍历测试每一个用例
 	for i := 0; i < len(r.judgeConfig.TestCases); i++ {
 		r.runCase(r.judgeConfig.TestCases[i])

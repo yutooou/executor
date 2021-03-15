@@ -4,9 +4,14 @@ package unix
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"io"
+	"math"
+	"os"
 	"os/exec"
+	"runtime"
 	"syscall"
+	"unsafe"
 )
 
 type ShellOptions struct {
@@ -94,4 +99,93 @@ func UnixShell(options *ShellOptions) (result *ShellResult, err error) {
 	}
 	result.Success = true
 	return result, nil
+}
+
+// 进程信息
+type ProcessInfo struct {
+	Pid    uintptr            
+	Status syscall.WaitStatus 
+	Rusage syscall.Rusage     
+}
+
+// fork调用
+func ForkProc() (pid uintptr, err error) {
+	r1, r2, errMsg := syscall.Syscall(syscall.SYS_FORK, 0, 0, 0)
+	darwin := runtime.GOOS == "darwin"
+	if errMsg != 0 {
+		return 0, fmt.Errorf("system call: fork(); error: %s", errMsg)
+	}
+	if darwin {
+		if r2 == 1 {
+			pid = 0
+		} else {
+			pid = r1
+		}
+	} else {
+		if r1 == 0 && r2 == 0 {
+			pid = 0
+		} else {
+			pid = r1
+		}
+	}
+	return pid, nil
+}
+
+// 重映射文件描述符
+func RedirectFileDescriptor(to int, path string, flag int, perm uint32) (fd int, err error) {
+	fd, errMsg := getFileDescriptor(path, flag, perm)
+	if errMsg == nil {
+		errMsg = syscall.Dup2(fd, to)
+		if errMsg != nil {
+			syscall.Close(fd)
+			return -1, errMsg
+		}
+		return fd, nil
+	} else {
+		return -1, errMsg
+	}
+}
+// 打开并获取文件的描述符
+func getFileDescriptor(path string, flag int, perm uint32) (fd int, err error) {
+	var filed = 0
+	_, errMsg := os.Stat(path)
+	if errMsg != nil {
+		if os.IsNotExist(err) {
+			return 0, errMsg
+		}
+	}
+	filed, errMsg = syscall.Open(path, flag, perm)
+	return filed, nil
+}
+
+type RLimit struct {
+	Which int
+	RLim  syscall.Rlimit
+}
+type ITimerVal struct {
+	ItInterval TimeVal
+	ItValue    TimeVal
+}
+type TimeVal struct {
+	TvSec  uint64
+	TvUsec uint64
+}
+
+func GetRLimitEntity(cur, max uint64) syscall.Rlimit {
+	return syscall.Rlimit{Cur: cur, Max: max}
+}
+
+
+// 硬件计时器
+func SetHardTimer(realTimeLimit int) error {
+	var prealt ITimerVal
+	prealt.ItInterval.TvSec = uint64(math.Floor(float64(realTimeLimit) / 1000.0))
+	prealt.ItInterval.TvUsec = uint64(realTimeLimit % 1000 * 1000)
+	prealt.ItValue.TvSec = prealt.ItInterval.TvSec
+	prealt.ItValue.TvUsec = prealt.ItInterval.TvUsec
+	_, _, err := syscall.RawSyscall(syscall.SYS_SETITIMER, 0, uintptr(unsafe.Pointer(&prealt)), 0)
+	if err != 0 {
+		return fmt.Errorf("system call setitimer() error: %s", err)
+	}
+	return nil
 }
