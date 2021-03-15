@@ -1,6 +1,5 @@
 {
   "judge_id" : "ac",
-  "problem_id" : "1001",
   "code_language" : "c",
   "problem_dir" : "/Users/yutooou/go/src/executor/testEnv/problems/1001",
   "source_code": "#include <stdio.h>\n\nint main()\n{\n\tint a, b;\n\twhile (~scanf(\"%d%d\", &a, &b)) {\n\t    printf(\"%d\\n\", a+b);\n\t}\n}"
