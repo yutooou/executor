@@ -1,12 +1,12 @@
 {
     "test_cases": [
         {
-            "id": "0",
+            "id": 0,
             "input": "0.in",
             "output": "0.out"
         },
         {
-            "id": "1",
+            "id": 1,
             "input": "1.in",
             "output": "1.out"
         }

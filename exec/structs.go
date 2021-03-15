@@ -12,7 +12,7 @@ type JudgeConfiguration struct {
 
 // 测试数据
 type TestCase struct {
-	Id				string	`json:"id"`
+	Id				int	`json:"id"`
 	Input           string 	`json:"input"`           // 测试用例输入文件
 	Output          string 	`json:"output"`          // 测试用例输出文件
 }
