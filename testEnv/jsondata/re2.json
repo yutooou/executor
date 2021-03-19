@@ -1,0 +1,6 @@
+{
+  "judge_id" : "dsafsa45re2",
+  "code_language" : "c",
+  "problem_dir" : "/Users/yutooou/go/src/executor/testEnv/problems/1001",
+  "source_code": "#include <stdio.h>\n\nint main(int argc, char **argv)\n{\n\tint a, b, *p;\n\t*p = 1;\n\twhile (~scanf(\"%d%d\", &a, &b)) {\n\t    printf(\"%d\\n\", a+b);\n\t}\n}\n"
+}

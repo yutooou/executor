@@ -12,19 +12,19 @@ import (
 	"syscall"
 )
 
+// 测试单个测试点
 func (r *Runner) runCase(testCase TestCase) *TestCaseResult {
+	// 为单个测试点记录结果
 	tcRes := TestCaseResult{}
 	tcRes.Id = testCase.Id
 	tcRes.Input = testCase.Input
 	tcRes.Output = testCase.Output
+	// 定义输出路径 judgeID_caseID.fileType
 	tcRes.ProgramOut = r.JudgeId + "_" + fmt.Sprintf("%d", testCase.Id) + ".out"
 	tcRes.ProgramError = r.JudgeId + "_" + fmt.Sprintf("%d", testCase.Id) + ".err"
+	// 开始起程序
 	pInfo, err := r.runProgram(&tcRes)
-	if err != nil {
-		tcRes.JudgeResult = RESULT_SE
-		tcRes.SeInfo = err.Error()
-		return &tcRes
-	}
+	// 程序开启期间任何问题都是SE
 	if err != nil {
 		tcRes.JudgeResult = RESULT_SE
 		tcRes.SeInfo = err.Error()
@@ -32,25 +32,28 @@ func (r *Runner) runCase(testCase TestCase) *TestCaseResult {
 	}
 	r.saveExitRusage(&tcRes, pInfo)
 	// 分析目标程序的状态
-	// r.analysisExitStatus(&tcRes, pInfo)
-	// // 只有什么状态都未曾写入的时候才进行文本比较！
-	// if tcRes.JudgeResult == RESULT_AC {
-	// 	// 进行文本比较
-	// 	err = r.DiffText(&tcRes)
-	// 	if err != nil {
-	// 		tcRes.JudgeResult = RESULT_SE
-	// 		tcRes.SeInfo = err.Error()
-	// 		return &tcRes
-	// 	}
-	// }
+	r.analysisExitStatus(&tcRes, pInfo)
+	// 只有什么状态都未曾写入的时候才进行文本比较！
+	if tcRes.JudgeResult == RESULT_AC {
+		// 进行文本比较
+		err = r.DiffText(&tcRes)
+		if err != nil {
+			tcRes.JudgeResult = RESULT_SE
+			tcRes.SeInfo = err.Error()
+			return &tcRes
+		}
+	}
 	return &tcRes
 }
 
 
 // 运行程序
 func (r *Runner) runProgram(rst *TestCaseResult) (*unix.ProcessInfo, error) {
+	// 创建进程信息
 	pinfo := unix.ProcessInfo{}
+	// 创建子进程
 	pid, fds, err := runProgramProcess(r, rst)
+
 	if err != nil {
 		if pid <= 0 {
 			// 如果是子进程错误了，输出到程序的error去
@@ -84,9 +87,10 @@ func runProgramProcess(r *Runner, rst *TestCaseResult) (uintptr, []int, error) {
 
 	fds = make([]int, 3)
 
-	// Fork a new process
+	// 创建子进程，返回pid
 	pid, err = unix.ForkProc()
 	if err != nil {
+		// 进程创建失败
 		return 0, fds, fmt.Errorf("fork process error: %s", err.Error())
 	}
 	if pid == 0 {
@@ -242,4 +246,55 @@ func (r *Runner) saveExitRusage(rst *TestCaseResult, pinfo *unix.ProcessInfo) {
 	rst.TimeUsed = tu
 	rst.MemoryUsed = mu
 	rst.ReSignum = int(status.Signal())
+}
+
+
+// 分析进程退出状态
+func (r *Runner) analysisExitStatus(rst *TestCaseResult, pinfo *unix.ProcessInfo) {
+	status := pinfo.Status
+
+	// If process stopped with a signal
+	if status.Signaled() {
+		sig := status.Signal()
+		if sig == syscall.SIGSEGV {
+			// MLE or RE can also get SIGSEGV signal.
+			if rst.MemoryUsed > r.judgeConfig.MemoryLimit {
+				rst.JudgeResult = RESULT_MLE
+			} else {
+				rst.JudgeResult = RESULT_RE
+				if r, e := SignalNumberMap[rst.ReSignum]; e {
+					rst.ReInfo = fmt.Sprintf("%s: %s", r[0], r[1])
+				}
+			}
+		} else if sig == syscall.SIGXFSZ {
+			// SIGXFSZ signal means OLE
+			rst.JudgeResult = RESULT_OLE
+		} else if sig == syscall.SIGALRM || sig == syscall.SIGVTALRM || sig == syscall.SIGXCPU {
+			// Normal TLE signal
+			rst.JudgeResult = RESULT_TLE
+		} else if sig == syscall.SIGKILL {
+			// Sometimes MLE might get SIGKILL signal.
+			// So if real time used lower than TIME_LIMIT - 100, it might be a TLE error.
+			if rst.TimeUsed > (r.judgeConfig.TimeLimit - 100) {
+				rst.JudgeResult = RESULT_TLE
+			} else {
+				rst.JudgeResult = RESULT_MLE
+			}
+		} else {
+			// Otherwise, called runtime error.
+			rst.JudgeResult = RESULT_RE
+			if r, e := SignalNumberMap[rst.ReSignum]; e {
+				rst.ReInfo = fmt.Sprintf("%s: %s", r[0], r[1])
+			}
+		}
+	} else {
+		// Sometimes setrlimit doesn't work accurately.
+		if rst.TimeUsed > r.judgeConfig.TimeLimit {
+			rst.JudgeResult = RESULT_MLE
+		} else if rst.MemoryUsed > r.judgeConfig.MemoryLimit {
+			rst.JudgeResult = RESULT_MLE
+		} else {
+			rst.JudgeResult = RESULT_AC
+		}
+	}
 }

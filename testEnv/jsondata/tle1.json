@@ -1,0 +1,6 @@
+{
+  "judge_id" : "1fsad14tle1",
+  "code_language" : "c",
+  "problem_dir" : "/Users/yutooou/go/src/executor/testEnv/problems/1001",
+  "source_code": "#include <stdio.h>\n\nint main(int argc, char **argv)\n{\n\tint a, b;\n\twhile (1) {}\n}\n"
+}

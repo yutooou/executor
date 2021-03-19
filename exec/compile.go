@@ -15,6 +15,9 @@ func (r *Runner) compileCode(result *Result) error {
 		return err
 	}
 
+	// 写入文件 做初始化工作
+	r.compiler.Init(r.SourceCode, r.workDir)
+
 	// 编译
 	err = r.compiler.Compile()
 	if err != nil {

@@ -4,6 +4,7 @@ package exec
 import (
 	"encoding/json"
 	"executor/compiler"
+	"fmt"
 	"io"
 	"os"
 	"path"
@@ -50,11 +51,24 @@ func (r *Runner) Judge() Result {
 		return result
 	}
 	
-	// var resultNumbers []int // 判题结果切片 位置对应测试点
+	var resultNumbers []int // 判题结果切片 位置对应测试点
 	// 遍历测试每一个用例
 	for i := 0; i < len(r.judgeConfig.TestCases); i++ {
-		r.runCase(r.judgeConfig.TestCases[i])
+		oneResult := r.runCase(r.judgeConfig.TestCases[i])
+		// fmt.Println(oneResult)
+		isFault := r.isDisastrousFault(&result, oneResult)
+		result.MemoryUsed = Max32(oneResult.MemoryUsed, result.MemoryUsed)
+		resultNumbers = append(resultNumbers, oneResult.JudgeResult)
+
+		if isFault {
+			break
+		}
+		if oneResult.JudgeResult != RESULT_AC && oneResult.JudgeResult != RESULT_PE {
+			break
+		}
 	}
+	// 生成结果
+	r.final(&result, resultNumbers)
 
 	return result
 }
@@ -104,4 +118,52 @@ func (r *Runner) loadProblemConfig(result *Result) error {
 		return err
 	}
 	return nil
+}
+
+// 判定是否是灾难性结果 灾难性后果的代码片段不宜向下继续测评
+func (r *Runner) isDisastrousFault(judgeResult *Result, caseResult *TestCaseResult) bool {
+	if caseResult.JudgeResult == RESULT_SE {
+		judgeResult.JudgeResult = RESULT_SE
+		judgeResult.SeInfo = fmt.Sprintf("testcase %s caused a problem", caseResult.Id)
+		return true
+	}
+	return false
+}
+
+// 生成当前源码结果数据
+func (r *Runner) final(result *Result, resultNumbers []int) {
+	acCount, peCount, waCount := 0, 0, 0
+	for _, num := range resultNumbers {
+		// 如果，不是AC、PE、WA
+		if num != RESULT_WA && num != RESULT_PE && num != RESULT_AC {
+			//直接应用结果
+			result.JudgeResult = num
+			return
+		}
+		if num == RESULT_WA {
+			waCount++
+		}
+		if num == RESULT_PE {
+			peCount++
+		}
+		if num == RESULT_AC {
+			acCount++
+		}
+	}
+	// 非AC、PE不会向下执行，所以判断长度是否相符
+	//if len(resultNumbers) != len(r.judgeConfig.TestCases) {
+	//	// 如果测试数据未全部跑完
+	//	result.JudgeResult = RESULT_WA
+	//} else {
+	//	// 如果测试数据未全部跑了
+	//
+	//}
+	if waCount > 0 {
+		// 如果存在WA，报WA
+		result.JudgeResult = RESULT_WA
+	} else if peCount > 0 {
+		result.JudgeResult = RESULT_PE
+	} else {
+		result.JudgeResult = RESULT_AC
+	}
 }
