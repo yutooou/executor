@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+package pb;
+
+option go_package = "./;pb";
+
+message judgeConfig {
+  string judgeId = 1;       // 判题标识id
+  string problemDir = 2;    // 题目目录
+  string codeLanguage = 3;  // 源码语言
+  string sourceCode = 4;    // 源码
+}
+
+message judgeResult {
+  string judgeId = 1;       // 判题标识id
+  int64 judgeResult = 2;    // 判题结果
+  int64 timeUsed = 3;       // 时间使用
+  int64 memoryUsed = 4;     // 内存占用
+  string reInfo = 5;        // Runtime Error信息
+  string seInfo = 6;        // System Error信息
+  string ceInfo = 7;        // Compile Error信息
+}
+
+service judge {
+  rpc judge(judgeConfig) returns (judgeResult);
+}
