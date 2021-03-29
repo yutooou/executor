@@ -58,6 +58,7 @@ func (r *Runner) Judge() Result {
 		// fmt.Println(oneResult)
 		isFault := r.isDisastrousFault(&result, oneResult)
 		result.MemoryUsed = Max32(oneResult.MemoryUsed, result.MemoryUsed)
+		result.TimeUsed = Max32(oneResult.TimeUsed, result.TimeUsed)
 		resultNumbers = append(resultNumbers, oneResult.JudgeResult)
 
 		if isFault {

@@ -107,6 +107,7 @@ func TestRunnerOLE(t *testing.T) {
 
 func TestRunnerTLE(t *testing.T) {
 	result := testRunner("/Users/yutooou/go/src/executor/testEnv/jsondata/tle1.json")
+	fmt.Println(result.TimeUsed)
 	switch result.JudgeResult {
 	case 6:
 		fmt.Println("\x1b[0;42m!!!TLE!!!\x1b[0m")

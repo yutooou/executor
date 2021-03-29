@@ -12,7 +12,7 @@ import (
 
 // 进行文本比较
 // Compare the text
-func (r *Runner) DiffText(result *TestCaseResult) error {
+func (r *Runner) diffText(result *TestCaseResult) error {
 	answerInfo, err := os.Stat(path.Join(r.ProblemDir, result.Output))
 	if err != nil {
 		result.JudgeResult = RESULT_SE

@@ -36,7 +36,7 @@ func (r *Runner) runCase(testCase TestCase) *TestCaseResult {
 	// 只有什么状态都未曾写入的时候才进行文本比较！
 	if tcRes.JudgeResult == RESULT_AC {
 		// 进行文本比较
-		err = r.DiffText(&tcRes)
+		err = r.diffText(&tcRes)
 		if err != nil {
 			tcRes.JudgeResult = RESULT_SE
 			tcRes.SeInfo = err.Error()

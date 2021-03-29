@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"executor/exec"
 	"executor/pb"
 	"executor/utils"
 	"flag"
@@ -14,16 +15,29 @@ import (
 
 type judgeServer struct {}
 func (j *judgeServer) Judge(ctx context.Context, jc *pb.JudgeConfig) (*pb.JudgeResult, error) {
-	fmt.Println("ok this test success")
-	return &pb.JudgeResult{
+	fmt.Println("start judge......")
+	runner := exec.Runner{
 		JudgeId: jc.JudgeId,
+		ProblemDir: jc.ProblemDir,
+		CodeLanguage: jc.CodeLanguage,
+		SourceCode: jc.SourceCode,
+	}
+	res := runner.Judge()
+	return &pb.JudgeResult{
+		JudgeId: res.JudgeId,
+		JudgeResult: int64(res.JudgeResult),
+		TimeUsed: int64(res.TimeUsed),
+		MemoryUsed: int64(res.MemoryUsed),
+		ReInfo: res.ReInfo,
+		SeInfo: res.SeInfo,
+		CeInfo: res.CeInfo,
 	}, nil
 }
 
 func main() {
 	var (
 		id = flag.String("id", utils.UUID(10), "实例id")
-		address = flag.String("address", "127.0.0.1", "服务地址")
+		address = flag.String("address", "", "服务地址")
 		port = flag.Int("port", 12100, "服务端口")
 	)
 	flag.Parse()
@@ -42,6 +56,7 @@ func consulRegister(id string, address string, port int) error {
 	// 将grpc服务注册到consul上
 	// 1、初始化consul配置
 	consulConfig := api.DefaultConfig()
+	consulConfig.Address = "http://host.docker.internal:8500"
 	// 2、创建consul对象
 	consulClient, err := api.NewClient(consulConfig)
 	if err != nil {
@@ -70,6 +85,7 @@ func consulRegister(id string, address string, port int) error {
 	}
 	return nil
 }
+
 
 func grpcServe(address string, port int) error {
 	// 1、初始化grpc对象
