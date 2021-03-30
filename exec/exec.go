@@ -70,8 +70,12 @@ func (r *Runner) Judge() Result {
 	}
 	// 生成结果
 	r.final(&result, resultNumbers)
-
+	r.clean()
 	return result
+}
+
+func (r *Runner) clean() {
+	os.RemoveAll(r.workDir)
 }
 
 // 创建工作空间目录

@@ -1,6 +1,0 @@
-{
-  "judge_id" : "dasdas77847ole",
-  "code_language" : "c",
-  "problem_dir" : "/Users/yutooou/go/src/executor/testEnv/problems/1001",
-  "source_code": "#include <stdio.h>\n\nint main(int argc, char **argv)\n{\n\tint a = 1000000;\n\twhile (a--) {\n\t    printf(\"%d\", a);\n\t}\n}\n"
-}

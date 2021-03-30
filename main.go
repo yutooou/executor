@@ -37,11 +37,12 @@ func (j *judgeServer) Judge(ctx context.Context, jc *pb.JudgeConfig) (*pb.JudgeR
 func main() {
 	var (
 		id = flag.String("id", utils.UUID(10), "实例id")
-		address = flag.String("address", "", "服务地址")
-		port = flag.Int("port", 12100, "服务端口")
+		address = flag.String("register_ip", "", "consul服务注册地址")
+		port = flag.Int("register_port", 12100, "consul服务注册端口")
+		consulAddress = flag.String("consul_address", "http://host.docker.internal:8500", "consul部署地址")
 	)
 	flag.Parse()
-	if err := consulRegister(*id, *address, *port); err != nil {
+	if err := consulRegister(*id, *address, *port, *consulAddress); err != nil {
 		fmt.Errorf("consul registered failed, err: %v\n", err)
 		return
 	}
@@ -52,11 +53,11 @@ func main() {
 	}
 }
 
-func consulRegister(id string, address string, port int) error {
+func consulRegister(id string, address string, port int, consulAddress string) error {
 	// 将grpc服务注册到consul上
 	// 1、初始化consul配置
 	consulConfig := api.DefaultConfig()
-	consulConfig.Address = "http://host.docker.internal:8500"
+	consulConfig.Address = consulAddress
 	// 2、创建consul对象
 	consulClient, err := api.NewClient(consulConfig)
 	if err != nil {
@@ -68,6 +69,7 @@ func consulRegister(id string, address string, port int) error {
 		ID:      id,
 		Tags:    []string{"exec"},
 		Name:    "ytoj-exec",
+		// 这里要设置为宿主机ip
 		Address: address,
 		Port:    port,
 		Check: &api.AgentServiceCheck{
@@ -93,7 +95,7 @@ func grpcServe(address string, port int) error {
 	// 2、注册服务
 	pb.RegisterJudgeServer(grpcServer, new(judgeServer))
 	// 3、设置监听，指定ip port
-	ln, err := net.Listen("tcp", address + ":" + strconv.Itoa(port))
+	ln, err := net.Listen("tcp", ":12100")
 	if err != nil {
 		fmt.Println("listen err: ", err)
 		return err
